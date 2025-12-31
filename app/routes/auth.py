@@ -14,7 +14,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register(auth_request: AuthRequest, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == auth_request.email).first()
     if existing_user:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered.")
 
     user = User(email=auth_request.email, password_hash=get_password_hash(auth_request.password))
     db.add(user)

@@ -32,3 +32,8 @@ app.include_router(outfits.router)
 @app.get("/", tags=["health"])
 def read_root():
     return {"message": "OutfitGuru API is running"}
+
+
+@app.get("/health", tags=["health"])
+def health_check():
+    return {"status": "ok"}
