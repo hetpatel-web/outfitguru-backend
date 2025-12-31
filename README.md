@@ -80,3 +80,9 @@ curl -X POST http://127.0.0.1:8000/outfits/recommendation \
 ## Security
 - Always set a strong `OUTFITGURU_SECRET_KEY`; rotate if exposed.
 - Keep `.env` out of version control; only commit `.env.example`.
+
+## Production notes
+- Required env vars: `OUTFITGURU_SECRET_KEY`, `OUTFITGURU_DATABASE_URL`, `OUTFITGURU_CORS_ORIGINS`.
+- Run without reload for production: `uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+- Set CORS to your deployed frontend origin(s); avoid `"*"`.
+- Rotate `OUTFITGURU_SECRET_KEY` if compromised; tokens issued before rotation will become invalid.
