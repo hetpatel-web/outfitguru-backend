@@ -7,7 +7,7 @@ FastAPI + SQLite API that powers OutfitGuru. Handles auth, wardrobe storage, rul
 - SQLite (file: `outfitguru.db`)
 
 ## Requirements
-- Python 3.12+ (recommended)
+- Python 3.12 (pinned at 3.12.12 via `.python-version`)
 - `virtualenv`/`venv` available
 
 ## Setup
