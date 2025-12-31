@@ -15,7 +15,7 @@ router = APIRouter(prefix="/wardrobe", tags=["wardrobe"])
 def create_clothing_item(
     item_in: ClothingItemCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ):
-    item = ClothingItem(**item_in.dict(), user_id=current_user.id)
+    item = ClothingItem(**item_in.model_dump(), user_id=current_user.id)
     db.add(item)
     db.commit()
     db.refresh(item)

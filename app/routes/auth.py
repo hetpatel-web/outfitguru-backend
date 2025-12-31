@@ -22,7 +22,7 @@ def register(auth_request: AuthRequest, db: Session = Depends(get_db)):
     db.refresh(user)
 
     token = Token(access_token=create_access_token(user.id))
-    return AuthResponse(user=UserResponse.from_orm(user), token=token)
+    return AuthResponse(user=UserResponse.model_validate(user), token=token)
 
 
 @router.post("/login", response_model=Token)
