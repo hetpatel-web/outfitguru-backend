@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.db.base import Base
-from app.db.session import get_db
+from app.utils.deps import get_db
 from app.main import app
 
 
