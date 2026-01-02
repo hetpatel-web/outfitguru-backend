@@ -86,3 +86,39 @@ curl -X POST http://127.0.0.1:8000/outfits/recommendation \
 - Run without reload for production: `uvicorn app.main:app --host 0.0.0.0 --port 8000`.
 - Set CORS to your deployed frontend origin(s); avoid `"*"`.
 - Rotate `OUTFITGURU_SECRET_KEY` if compromised; tokens issued before rotation will become invalid.
+
+## Deploying on Render
+- Service type: Web Service (Python).
+- Build: Render installs from `requirements.txt`; no extra build step.
+- Start command:
+  ```
+  uvicorn app.main:app --host 0.0.0.0 --port 8000
+  ```
+- Health check: `/health`.
+- Env vars:
+  - `OUTFITGURU_SECRET_KEY` (required, strong)
+  - `OUTFITGURU_DATABASE_URL` (use Neon Postgres in prod)
+  - `OUTFITGURU_CORS_ORIGINS` (JSON array; include your frontend origin)
+  - `ENV` (optional, e.g., `production`)
+
+## Production environment variables
+- `OUTFITGURU_SECRET_KEY` — required
+- `OUTFITGURU_DATABASE_URL` — Postgres for prod; SQLite only for local dev
+- `OUTFITGURU_CORS_ORIGINS` — JSON array of allowed origins
+- `ENV` — optional flag for environment
+
+## Production run command
+```
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+## CORS configuration
+- Dev: include `http://localhost:5173`.
+- Prod: set to your Cloudflare Pages domain(s); do not use `"*"` in production.
+
+## Database configuration
+- Local: SQLite file `outfitguru.db`.
+- Production: set `OUTFITGURU_DATABASE_URL` to a Postgres connection string (e.g., Neon).
+
+## Health endpoint
+- `GET /health` → `{"status":"ok"}`. Use for Render health checks.
