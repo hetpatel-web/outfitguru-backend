@@ -87,6 +87,12 @@ curl -X POST http://127.0.0.1:8000/outfits/recommendation \
 - Set CORS to your deployed frontend origin(s); avoid `"*"`.
 - Rotate `OUTFITGURU_SECRET_KEY` if compromised; tokens issued before rotation will become invalid.
 
+## Auth rules (staging)
+- Passwords: minimum length 8; stored as bcrypt hashes (no plaintext).
+- Tokens: JWT access token ~24h expiry (`access_token_expire_minutes`); expired/invalid/missing token returns 401.
+- Duplicate email on register returns 409; invalid credentials return 401.
+- Errors: JSON responses with `detail` and appropriate status codes.
+
 ## Deploying on Render
 - Service type: Web Service (Python).
 - Build: Render installs from `requirements.txt`; no extra build step.

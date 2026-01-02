@@ -12,7 +12,7 @@ class Token(BaseModel):
 
 class AuthRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=8)
 
 
 class AuthResponse(BaseModel):
