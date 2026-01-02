@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,6 +12,7 @@ class OutfitResponse(BaseModel):
     item_ids: List[int] = Field(default_factory=list)
     feedback: OutfitFeedback
     created_at: datetime
+    reason: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

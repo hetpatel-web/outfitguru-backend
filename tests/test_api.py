@@ -73,3 +73,4 @@ def test_recommendation_success_with_minimum_items(client):
     outfit = rec.json()
     assert outfit["item_ids"] and len(outfit["item_ids"]) >= 3
     assert outfit["feedback"] == "none"
+    assert outfit.get("reason")
