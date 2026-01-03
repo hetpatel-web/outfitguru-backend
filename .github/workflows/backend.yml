@@ -1,18 +1,11 @@
 name: Backend CI
 
 on:
-  push:
-    paths:
-      - "app/**"
-      - "tests/**"
-      - "requirements.txt"
-      - ".github/workflows/backend.yml"
-  pull_request:
-    paths:
-      - "app/**"
-      - "tests/**"
-      - "requirements.txt"
-      - ".github/workflows/backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: outfitguru-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
   test:
