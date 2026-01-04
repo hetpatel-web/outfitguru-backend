@@ -105,3 +105,41 @@ def test_invalid_color_family_rejected(client):
         headers=auth_headers(token),
     )
     assert resp.status_code == 422
+
+
+def test_update_preferences_requires_auth(client):
+    resp = client.patch("/me/preferences", json={"goal": "daily"})
+    assert resp.status_code in (401, 403)
+
+
+def test_update_preferences_sets_and_clears_goal(client):
+    reg = register(client)
+    token = reg.json()["token"]["access_token"]
+
+    update = client.patch(
+        "/me/preferences",
+        json={"goal": "daily"},
+        headers=auth_headers(token),
+    )
+    assert update.status_code == 200
+    assert update.json()["goal"] == "daily"
+
+    clear = client.patch(
+        "/me/preferences",
+        json={"goal": None},
+        headers=auth_headers(token),
+    )
+    assert clear.status_code == 200
+    assert clear.json()["goal"] is None
+
+
+def test_update_preferences_rejects_invalid_goal(client):
+    reg = register(client)
+    token = reg.json()["token"]["access_token"]
+
+    resp = client.patch(
+        "/me/preferences",
+        json={"goal": "someday"},
+        headers=auth_headers(token),
+    )
+    assert resp.status_code == 422
