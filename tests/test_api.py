@@ -1,14 +1,14 @@
-def register(client):
+def register(client, email: str = "test@example.com"):
     return client.post(
         "/auth/register",
-        json={"email": "test@example.com", "password": "secret123"},
+        json={"email": email, "password": "secret123"},
     )
 
 
-def login(client):
+def login(client, email: str = "test@example.com"):
     return client.post(
         "/auth/login",
-        json={"email": "test@example.com", "password": "secret123"},
+        json={"email": email, "password": "secret123"},
     )
 
 
@@ -33,12 +33,15 @@ def test_create_and_list_wardrobe_items(client):
 
     create_resp = client.post(
         "/wardrobe/items",
-        json={"category": "top", "color": "navy"},
+        json={"name": "Navy tee", "category": "top", "color": "navy"},
         headers=auth_headers(token),
     )
     assert create_resp.status_code == 201
     item_id = create_resp.json()["id"]
     assert item_id
+    assert create_resp.json()["color_family"] == "Other"
+    assert create_resp.json()["season"] == "All-season"
+    assert create_resp.json()["subtype"] == "General"
 
     list_resp = client.get("/wardrobe/items", headers=auth_headers(token))
     assert list_resp.status_code == 200
@@ -47,13 +50,15 @@ def test_create_and_list_wardrobe_items(client):
     assert items[0]["id"] == item_id
 
 
-def test_recommendation_missing_categories_returns_400(client):
+def test_recommendation_missing_categories_returns_need_more_items(client):
     reg = register(client)
     token = reg.json()["token"]["access_token"]
 
     resp = client.post("/outfits/recommendation", headers=auth_headers(token))
-    assert resp.status_code == 400
-    assert "Add at least one item" in resp.json().get("detail", "")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "need_more_items"
+    assert "footwear" in data["missing_categories"]
 
 
 def test_recommendation_success_with_minimum_items(client):
@@ -63,7 +68,7 @@ def test_recommendation_success_with_minimum_items(client):
     for cat in ["top", "bottom", "footwear"]:
         create = client.post(
             "/wardrobe/items",
-            json={"category": cat, "color": f"{cat}-color"},
+            json={"name": cat, "category": cat, "color": f"{cat}-color"},
             headers=auth_headers(token),
         )
         assert create.status_code == 201
@@ -74,3 +79,29 @@ def test_recommendation_success_with_minimum_items(client):
     assert outfit["item_ids"] and len(outfit["item_ids"]) >= 3
     assert outfit["feedback"] == "none"
     assert outfit.get("reason")
+
+
+def test_wardrobe_categories_endpoint(client):
+    reg = register(client)
+    token = reg.json()["token"]["access_token"]
+
+    resp = client.get("/wardrobe/categories", headers=auth_headers(token))
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "categories" in data
+    assert "color_families" in data and "Black" in data["color_families"]
+    assert "seasons" in data and "All-season" in data["seasons"]
+    top_category = next(c for c in data["categories"] if c["slug"] == "top")
+    assert "General" in top_category["subtypes"]
+
+
+def test_invalid_color_family_rejected(client):
+    reg = register(client)
+    token = reg.json()["token"]["access_token"]
+
+    resp = client.post(
+        "/wardrobe/items",
+        json={"category": "top", "color": "navy", "color_family": "Rainbow"},
+        headers=auth_headers(token),
+    )
+    assert resp.status_code == 422

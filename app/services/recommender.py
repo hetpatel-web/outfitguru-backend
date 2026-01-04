@@ -3,8 +3,9 @@ from typing import List, Optional, Sequence
 
 from sqlalchemy.orm import Session
 
-from app.models.clothing_item import ClothingCategory, ClothingItem
-from app.models.outfit import Outfit, OutfitFeedback
+from app.models.clothing_item import ClothingItem
+from app.models.enums import ClothingCategory, OutfitFeedback
+from app.models.outfit import Outfit
 
 
 class RecommendationError(Exception):
@@ -23,10 +24,6 @@ def _items_for_category(db: Session, user_id: int, category: ClothingCategory) -
 
 
 def generate_outfit_recommendation(db: Session, user_id: int) -> Outfit:
-    required = [ClothingCategory.TOP, ClothingCategory.BOTTOM, ClothingCategory.FOOTWEAR]
-    optional = [ClothingCategory.OUTERWEAR]
-    missing: List[str] = []
-
     outfits: Sequence[Outfit] = (
         db.query(Outfit).filter(Outfit.user_id == user_id).order_by(Outfit.created_at.desc()).all()
     )
@@ -38,12 +35,8 @@ def generate_outfit_recommendation(db: Session, user_id: int) -> Outfit:
             if item_id not in last_used:
                 last_used[item_id] = outfit.created_at
 
-    def pick_item(category: ClothingCategory) -> Optional[ClothingItem]:
+    def sorted_candidates(category: ClothingCategory) -> List[ClothingItem]:
         candidates = _items_for_category(db, user_id, category)
-        if not candidates:
-            missing.append(category.value)
-            return None
-        # Sort least recently used first (never used -> oldest last use -> newest last use)
         candidates.sort(
             key=lambda item: (
                 0 if item.id not in last_used else 1,
@@ -55,20 +48,45 @@ def generate_outfit_recommendation(db: Session, user_id: int) -> Outfit:
     selected: List[ClothingItem] = []
     category_options: dict[ClothingCategory, List[ClothingItem]] = {}
 
-    for category in required:
-        options = pick_item(category)
-        if options:
-            category_options[category] = options
-            selected.append(options[0])
+    footwear_options = sorted_candidates(ClothingCategory.FOOTWEAR)
+    one_piece_options = sorted_candidates(ClothingCategory.ONE_PIECE)
+    top_options = sorted_candidates(ClothingCategory.TOP)
+    bottom_options = sorted_candidates(ClothingCategory.BOTTOM)
+    outerwear_options = sorted_candidates(ClothingCategory.OUTERWEAR)
+    missing: List[str] = []
 
-    if missing:
-        raise RecommendationError(missing)
+    if not footwear_options:
+        missing.append(ClothingCategory.FOOTWEAR.value)
 
-    # Optional outerwear
-    outerwear_options = pick_item(ClothingCategory.OUTERWEAR)
+    separates_ready = bool(top_options) and bool(bottom_options)
+    one_piece_ready = bool(one_piece_options)
+
+    if separates_ready:
+        category_options[ClothingCategory.TOP] = top_options
+        category_options[ClothingCategory.BOTTOM] = bottom_options
+        selected.extend([top_options[0], bottom_options[0]])
+    elif one_piece_ready:
+        category_options[ClothingCategory.ONE_PIECE] = one_piece_options
+        selected.append(one_piece_options[0])
+    else:
+        if not one_piece_ready:
+            missing.append(ClothingCategory.ONE_PIECE.value)
+        if not separates_ready:
+            if not top_options:
+                missing.append(ClothingCategory.TOP.value)
+            if not bottom_options:
+                missing.append(ClothingCategory.BOTTOM.value)
+
+    if footwear_options:
+        category_options[ClothingCategory.FOOTWEAR] = footwear_options
+        selected.append(footwear_options[0])
+
     if outerwear_options:
         category_options[ClothingCategory.OUTERWEAR] = outerwear_options
         selected.append(outerwear_options[0])
+
+    if missing:
+        raise RecommendationError(sorted(set(missing)))
 
     def current_item_ids(items: List[ClothingItem]) -> List[int]:
         return [item.id for item in items]
@@ -100,7 +118,10 @@ def generate_outfit_recommendation(db: Session, user_id: int) -> Outfit:
     db.commit()
     db.refresh(outfit)
 
-    applied_rules: List[str] = ["used least-recently-worn items per category"]
+    core_mix = "one-piece + footwear" if any(
+        item.category == ClothingCategory.ONE_PIECE for item in selected
+    ) else "top + bottom + footwear"
+    applied_rules: List[str] = [f"kept required mix ({core_mix})", "used least-recently-worn items per category"]
     if last_outfit and set(item_ids) != set(last_outfit.item_ids):
         applied_rules.append("avoided repeating your last outfit")
     elif last_outfit:

@@ -1,9 +1,9 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.models.outfit import OutfitFeedback
+from app.models.enums import OutfitFeedback
 
 
 class OutfitResponse(BaseModel):
@@ -19,3 +19,12 @@ class OutfitResponse(BaseModel):
 
 class OutfitFeedbackUpdate(BaseModel):
     feedback: OutfitFeedback
+
+
+class NeedMoreItemsResponse(BaseModel):
+    status: Literal["need_more_items"] = "need_more_items"
+    missing_categories: List[str]
+    message: str
+
+
+RecommendationResponse = Union[OutfitResponse, NeedMoreItemsResponse]
