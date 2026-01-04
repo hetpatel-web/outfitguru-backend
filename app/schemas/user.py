@@ -1,7 +1,17 @@
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+
+GoalPreference = Literal["daily", "plan_ahead"]
+
+class PreferencesUpdate(BaseModel):
+    goal: Optional[GoalPreference] = Field(default=None)
+
+
+class PreferencesResponse(PreferencesUpdate):
+    model_config = ConfigDict(extra="allow")
 
 
 class UserBase(BaseModel):
