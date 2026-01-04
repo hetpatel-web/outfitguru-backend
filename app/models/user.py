@@ -18,3 +18,4 @@ class User(Base):
 
     clothing_items: Mapped[List["ClothingItem"]] = relationship(back_populates="user")
     outfits: Mapped[List["Outfit"]] = relationship(back_populates="user")
+    outfit_occurrences: Mapped[List["OutfitOccurrence"]] = relationship(back_populates="user")

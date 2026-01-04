@@ -6,7 +6,7 @@ from .test_api import auth_headers, register
 def _add_item(client, token, category, color):
     resp = client.post(
         "/wardrobe/items",
-        json={"category": category, "color": color},
+        json={"name": f"{category} item", "category": category, "color": color},
         headers=auth_headers(token),
     )
     assert resp.status_code == 201
@@ -47,3 +47,20 @@ def test_recommendation_includes_reason(client):
     assert rec.status_code == 201
     data = rec.json()
     assert data.get("reason")
+
+
+def test_recommendation_can_use_one_piece_without_bottom(client):
+    reg = register(client)
+    token = reg.json()["token"]["access_token"]
+
+    one_piece_id = _add_item(client, token, "one_piece", "black")
+    footwear_id = _add_item(client, token, "footwear", "white")
+
+    rec = client.post("/outfits/recommendation", headers=auth_headers(token))
+    assert rec.status_code == 201
+    data = rec.json()
+    item_ids = data["item_ids"]
+    wardrobe = {item["id"]: item["category"] for item in client.get("/wardrobe/items", headers=auth_headers(token)).json()}
+    assert one_piece_id in item_ids
+    assert footwear_id in item_ids
+    assert all(wardrobe[item_id] != "bottom" for item_id in item_ids)

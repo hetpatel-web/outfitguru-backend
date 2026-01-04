@@ -7,14 +7,16 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import get_settings
 from app.db.base import Base
+from app.db.migrations import run_migrations
 from app.db.session import engine
-from app.routes import auth, outfits, users, wardrobe
+from app.routes import auth, calendar, outfits, users, wardrobe
 
 settings = get_settings()
 
 # Ensure models are imported so metadata is ready for table creation
 from app import models  # noqa: E402,F401
 
+run_migrations(engine)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
@@ -47,6 +49,7 @@ async def log_requests(request: Request, call_next):
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(wardrobe.router)
+app.include_router(calendar.router)
 app.include_router(outfits.router)
 
 

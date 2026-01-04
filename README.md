@@ -36,12 +36,18 @@ Docs: http://127.0.0.1:8000/docs
   - `POST /auth/login` — `{email, password}` → token
   - `GET /me` — current user (Bearer token)
 - **Wardrobe**
-  - `POST /wardrobe/items` — create clothing item (category, color, optional notes/image_url)
+  - `GET /wardrobe/categories` — catalog of categories + subtypes + allowed color families/seasons
+  - `POST /wardrobe/items` — create item (category, subtype, color family, season, optional notes/image_url)
   - `GET /wardrobe/items` — list items for the user
 - **Outfits**
-  - `POST /outfits/recommendation` — generate and persist today’s outfit
+  - `POST /outfits/recommendation` — generate and persist today’s outfit, or return `need_more_items` payload when required categories are missing
   - `POST /outfits/{id}/feedback` — set feedback (`like`, `dislike`, `skip`, `none`)
   - `GET /outfits/history` — list outfits (most recent first)
+- **Calendar**
+  - `GET /calendar/month?year=YYYY&month=MM` — occurrences for the month
+  - `GET /calendar/day?date=YYYY-MM-DD` — occurrence for a single day
+  - `POST /calendar/plan-tomorrow` — copy latest outfit into tomorrow’s slot (idempotent)
+  - `POST /calendar/confirm-worn` — mark a day worn/with reason if skipped
 
 ## Quick Testing
 - Swagger UI: open http://127.0.0.1:8000/docs and try requests with “Authorize” (Bearer token).
@@ -61,16 +67,20 @@ TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/login \
 curl -X POST http://127.0.0.1:8000/wardrobe/items \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"category":"top","color":"navy"}'
+  -d '{"category":"top","color":"navy","subtype":"General","color_family":"Blue","season":"All-season"}'
 
 # Request recommendation
 curl -X POST http://127.0.0.1:8000/outfits/recommendation \
+  -H "Authorization: Bearer $TOKEN"
+
+# Plan tomorrow (after at least one recommendation exists)
+curl -X POST http://127.0.0.1:8000/calendar/plan-tomorrow \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Database Notes
 - Defaults to SQLite file `outfitguru.db` in the repo root.
-- Change `OUTFITGURU_DATABASE_URL` for external DBs; run migrations accordingly (none included in MVP).
+- Change `OUTFITGURU_DATABASE_URL` for external DBs; built-in lightweight SQLite migration adds wardrobe metadata columns if missing.
 
 ## Common Issues
 - **Address already in use (8000):** stop existing uvicorn or change `--port`.

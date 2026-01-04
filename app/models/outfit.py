@@ -1,18 +1,11 @@
 from datetime import date, datetime
-from enum import Enum
 from typing import List
 
 from sqlalchemy import Date, DateTime, Enum as SAEnum, ForeignKey, Integer, JSON, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-
-
-class OutfitFeedback(str, Enum):
-    LIKE = "like"
-    DISLIKE = "dislike"
-    SKIP = "skip"
-    NONE = "none"
+from app.models.enums import OutfitFeedback
 
 
 class Outfit(Base):

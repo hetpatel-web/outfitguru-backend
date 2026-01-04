@@ -6,7 +6,7 @@ from .test_api import auth_headers, register
 def _add_item(client, token, category, color):
     resp = client.post(
         "/wardrobe/items",
-        json={"category": category, "color": color},
+        json={"name": f"{category} item", "category": category, "color": color},
         headers=auth_headers(token),
     )
     assert resp.status_code == 201
