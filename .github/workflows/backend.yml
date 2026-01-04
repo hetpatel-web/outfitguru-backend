@@ -1,6 +1,10 @@
 name: Backend CI
 
 on:
+  pull_request:
+    branches:
+      - main
+      - dev
   workflow_dispatch:
 
 concurrency:
@@ -9,6 +13,7 @@ concurrency:
 
 jobs:
   test:
+    name: backend-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

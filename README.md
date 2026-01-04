@@ -6,6 +6,10 @@ FastAPI + SQLite API that powers OutfitGuru. Handles auth, wardrobe storage, rul
 - JWT auth via python-jose + passlib (bcrypt)
 - SQLite (file: `outfitguru.db`)
 
+## Branch policy
+- `main` is protected; do all work on feature branches (or `dev`) and merge via PRs.
+- Local safeguard: `git config core.hooksPath .githooks` (blocks direct pushes to `main`).
+
 ## Requirements
 - Python 3.12 (pinned at 3.12.12 via `.python-version`)
 - `virtualenv`/`venv` available
